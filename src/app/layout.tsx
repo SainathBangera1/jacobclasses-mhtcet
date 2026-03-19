@@ -15,6 +15,12 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: 'Jacob Classes',
   description: 'A MHT_CET APP INTEGRATED WITH QUILL PLUS WEBSITE',
+  manifest: '/manifest.json', // <-- ADD THIS
+  appleWebApp: {
+    // <-- ADD THIS (optional but recommended)
+    capable: true,
+    statusBarStyle: 'default',
+  },
 }
 
 export default function RootLayout({

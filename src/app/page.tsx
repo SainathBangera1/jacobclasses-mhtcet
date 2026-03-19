@@ -28,6 +28,7 @@ export default function Home() {
   // --- Listen for beforeinstallprompt event ---
   useEffect(() => {
     const handler = (e: Event) => {
+      console.log('beforeinstallprompt fired!') // <-- add this
       const promptEvent = e as BeforeInstallPromptEvent
       promptEvent.preventDefault()
       setDeferredPrompt(promptEvent)
