@@ -132,7 +132,7 @@ export default function Home() {
           }}
         >
           <Image
-            src='/logo.png' // Make sure your logo is at public/logo.png
+            src='/icons/logo.png' // Make sure your logo is at public/logo.png
             alt='Jacob Classes Logo'
             width={150}
             height={150}
