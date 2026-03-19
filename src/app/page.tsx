@@ -1,65 +1,149 @@
-import Image from "next/image";
+'use client'
+
+import Image from 'next/image'
+import { useEffect, useRef, useState } from 'react'
+
+const THIRD_PARTY_URL = 'https://app.quillplus.in/login?ref=jacobclasess' // <-- REPLACE THIS
+const TAGLINE = 'Your perfection is our priority'
 
 export default function Home() {
+  const iframeRef = useRef<HTMLIFrameElement>(null)
+  const [wasHidden, setWasHidden] = useState(false)
+  const [showSplash, setShowSplash] = useState(true)
+  const [typedText, setTypedText] = useState('')
+  const [typingComplete, setTypingComplete] = useState(false)
+
+  // --- Typing animation for splash screen ---
+  useEffect(() => {
+    let i = 0
+    const typingInterval = setInterval(() => {
+      if (i < TAGLINE.length) {
+        setTypedText(TAGLINE.substring(0, i + 1))
+        i++
+      } else {
+        clearInterval(typingInterval)
+        setTypingComplete(true)
+        setTimeout(() => {
+          setShowSplash(false)
+        }, 1000)
+      }
+    }, 100)
+    return () => clearInterval(typingInterval)
+  }, [])
+
+  // --- Visibility detection (minimize / tab switch) ---
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        setWasHidden(true)
+      } else {
+        if (wasHidden && iframeRef.current) {
+          iframeRef.current.src = THIRD_PARTY_URL
+          setWasHidden(false)
+        }
+      }
+    }
+
+    const handleBlur = () => setWasHidden(true)
+    const handleFocus = () => {
+      if (wasHidden && iframeRef.current) {
+        iframeRef.current.src = THIRD_PARTY_URL
+        setWasHidden(false)
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('blur', handleBlur)
+    window.addEventListener('focus', handleFocus)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('blur', handleBlur)
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [wasHidden])
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <>
+      {showSplash && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            backgroundColor: '#800000',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 2000,
+            color: 'white',
+            fontFamily: 'sans-serif',
+          }}
+        >
+          <Image
+            src='/logo.png'
+            alt='Jacob Classes Logo'
+            style={{ width: '150px', height: 'auto', marginBottom: '20px' }}
+          />
+          <div style={{ fontSize: '1.5rem', fontWeight: '300' }}>
+            {typedText}
+            {!typingComplete && <span style={{ opacity: 0.7 }}>|</span>}
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      )}
+
+      {!showSplash && (
+        <div
+          style={{ display: 'flex', flexDirection: 'column', height: '100vh' }}
+        >
+          <header
+            style={{
+              backgroundColor: '#800000',
+              color: 'white',
+              padding: '0 20px',
+              height: '60px',
+              display: 'flex',
+              alignItems: 'center',
+              fontFamily: 'sans-serif',
+            }}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <div
+              style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                backgroundColor: '#a52a2a',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 'bold',
+                fontSize: '18px',
+                marginRight: '12px',
+              }}
+            >
+              JC
+            </div>
+            <span style={{ fontSize: '20px', fontWeight: '500' }}>
+              Jacob Classes
+            </span>
+          </header>
+
+          <iframe
+            ref={iframeRef}
+            src={THIRD_PARTY_URL}
+            style={{
+              width: '100%',
+              flex: 1,
+              border: 'none',
+            }}
+            title='Third-party app'
+            sandbox='allow-same-origin allow-scripts allow-forms allow-popups allow-modals'
+          />
         </div>
-      </main>
-    </div>
-  );
+      )}
+    </>
+  )
 }
