@@ -15,10 +15,10 @@ interface BeforeInstallPromptEvent extends Event {
 
 export default function Home() {
   const iframeRef = useRef<HTMLIFrameElement>(null)
-  const [wasHidden, setWasHidden] = useState(false)
   const [showSplash, setShowSplash] = useState(true)
   const [typedText, setTypedText] = useState('')
   const [typingComplete, setTypingComplete] = useState(false)
+  const [iframeLoading, setIframeLoading] = useState(true)
 
   // PWA install prompt state
   const [deferredPrompt, setDeferredPrompt] =
@@ -28,27 +28,19 @@ export default function Home() {
   // --- Listen for beforeinstallprompt event ---
   useEffect(() => {
     const handler = (e: Event) => {
-      // Cast to our custom type
       const promptEvent = e as BeforeInstallPromptEvent
-      // Prevent the mini-infobar from appearing on mobile
       promptEvent.preventDefault()
-      // Stash the event so it can be triggered later
       setDeferredPrompt(promptEvent)
       setIsInstallable(true)
     }
 
     window.addEventListener('beforeinstallprompt', handler)
-
     return () => window.removeEventListener('beforeinstallprompt', handler)
   }, [])
 
   const handleInstallClick = () => {
     if (!deferredPrompt) return
-
-    // Show the install prompt
     deferredPrompt.prompt()
-
-    // Wait for the user to respond to the prompt
     deferredPrompt.userChoice.then((choiceResult) => {
       if (choiceResult.outcome === 'accepted') {
         console.log('User accepted the install prompt')
@@ -78,37 +70,15 @@ export default function Home() {
     return () => clearInterval(typingInterval)
   }, [])
 
-  // --- Visibility detection (minimize / tab switch) ---
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        setWasHidden(true)
-      } else {
-        if (wasHidden && iframeRef.current) {
-          iframeRef.current.src = THIRD_PARTY_URL
-          setWasHidden(false)
-        }
-      }
-    }
+  // Iframe load handlers
+  const handleIframeLoad = () => {
+    setIframeLoading(false)
+  }
 
-    const handleBlur = () => setWasHidden(true)
-    const handleFocus = () => {
-      if (wasHidden && iframeRef.current) {
-        iframeRef.current.src = THIRD_PARTY_URL
-        setWasHidden(false)
-      }
-    }
-
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    window.addEventListener('blur', handleBlur)
-    window.addEventListener('focus', handleFocus)
-
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-      window.removeEventListener('blur', handleBlur)
-      window.removeEventListener('focus', handleFocus)
-    }
-  }, [wasHidden])
+  const handleIframeError = () => {
+    setIframeLoading(false)
+    console.error('Iframe failed to load')
+  }
 
   return (
     <>
@@ -132,7 +102,7 @@ export default function Home() {
           }}
         >
           <Image
-            src='/icons/logo.png' // Make sure your logo is at public/logo.png
+            src='/icons/logo.png'
             alt='Jacob Classes Logo'
             width={150}
             height={150}
@@ -160,7 +130,6 @@ export default function Home() {
               fontFamily: 'sans-serif',
             }}
           >
-            {/* Avatar with "JC" */}
             <div
               style={{
                 width: '40px',
@@ -181,7 +150,6 @@ export default function Home() {
               Jacob Classes
             </span>
 
-            {/* Install button (only shown when installable) */}
             {isInstallable && (
               <button
                 onClick={handleInstallClick}
@@ -201,19 +169,60 @@ export default function Home() {
             )}
           </header>
 
-          <iframe
-            ref={iframeRef}
-            src={THIRD_PARTY_URL}
-            style={{
-              width: '100%',
-              flex: 1,
-              border: 'none',
-            }}
-            title='Third-party app'
-            sandbox='allow-same-origin allow-scripts allow-forms allow-popups allow-modals'
-          />
+          {/* Iframe container with loading indicator */}
+          <div style={{ position: 'relative', flex: 1 }}>
+            {iframeLoading && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  backgroundColor: '#f0f0f0',
+                  zIndex: 10,
+                }}
+              >
+                <div className='spinner'></div>
+              </div>
+            )}
+            <iframe
+              ref={iframeRef}
+              src={THIRD_PARTY_URL}
+              style={{
+                width: '100%',
+                height: '100%',
+                border: 'none',
+                display: 'block',
+              }}
+              title='Third-party app'
+              sandbox='allow-same-origin allow-scripts allow-forms allow-popups allow-modals'
+              onLoad={handleIframeLoad}
+              onError={handleIframeError}
+            />
+          </div>
         </div>
       )}
+
+      {/* Spinner styles */}
+      <style jsx>{`
+        .spinner {
+          border: 4px solid rgba(0, 0, 0, 0.1);
+          border-left-color: #800000;
+          border-radius: 50%;
+          width: 40px;
+          height: 40px;
+          animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+          to {
+            transform: rotate(360deg);
+          }
+        }
+      `}</style>
     </>
   )
 }
