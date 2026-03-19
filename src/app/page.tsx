@@ -195,10 +195,12 @@ export default function Home() {
               src={THIRD_PARTY_URL}
               style={{
                 width: '100%',
-                flex: 1,
+                height: '100%',
                 border: 'none',
+                display: 'block',
               }}
               title='Third-party app'
+              //sandbox='allow-same-origin allow-scripts allow-forms allow-popups allow-modals'
               onLoad={handleIframeLoad}
               onError={handleIframeError}
             />
